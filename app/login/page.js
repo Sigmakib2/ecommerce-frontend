@@ -5,43 +5,63 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import axiosInstance from '../../utils/axios';
 
-export default function Login() {
+export default function LoginPage() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [error, setError] = useState(null);
+    const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
+
     const router = useRouter();
 
-    const handleLogin = async (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
+        setError('');
+        setLoading(true);
+
         try {
-            const { data } = await axiosInstance.post('/auth/login', { email, password });
-            localStorage.setItem('userInfo', JSON.stringify(data)); // Save token to localStorage
-            router.push('/products'); // Redirect to products page
+            const { data } = await axiosInstance.post('/auth/login', {
+                email,
+                password,
+            });
+
+            // Save the token to localStorage
+            localStorage.setItem('authToken', data.token);
+
+            // Redirect to the admin dashboard or another page
+            router.push('/admin');
         } catch (error) {
             setError('Invalid email or password');
+        } finally {
+            setLoading(false);
         }
     };
 
     return (
         <div>
             <h1>Login</h1>
-            {error && <p>{error}</p>}
-            <form onSubmit={handleLogin}>
-                <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Email"
-                    required
-                />
-                <input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Password"
-                    required
-                />
-                <button type="submit">Login</button>
+            {error && <p style={{ color: 'red' }}>{error}</p>}
+            <form onSubmit={handleSubmit}>
+                <div>
+                    <label>Email</label>
+                    <input
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                    />
+                </div>
+                <div>
+                    <label>Password</label>
+                    <input
+                        type="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                    />
+                </div>
+                <button type="submit" disabled={loading}>
+                    {loading ? 'Logging in...' : 'Login'}
+                </button>
             </form>
         </div>
     );
